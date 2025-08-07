@@ -12,23 +12,25 @@ public class RetryPolicy {
     private final int maxAttempts;
     private final Predicate<Throwable> predicate;
     private final BackOffStrategy backOffStrategy;
+    private final RetryListener retryListener;
 
     private RetryPolicy(Builder builder){
         this.maxAttempts = builder.maxAttempts;
         this.predicate = builder.predicate;
         this.backOffStrategy = builder.backOffStrategy;
+        this.retryListener = builder.retryListener;
     }
     public int getMaxAttempts() { return maxAttempts; }
     public BackOffStrategy getBackOffStrategy() { return backOffStrategy; }
     public Predicate<Throwable> getPredicate() { return predicate; }
-
+    public RetryListener getRetryListener() { return retryListener; }
 
 
     public static class Builder {
         private int maxAttempts =3 ;
         private Predicate<Throwable> predicate = e -> true;
         private BackOffStrategy backOffStrategy = new FixedBackOffStrategy(Duration.ofMillis(500));
-
+        private RetryListener retryListener = (attempt, exception) -> {};
         public Builder maxAttempts(int maxAttempts) {
             this.maxAttempts = maxAttempts;
             return this;
@@ -39,6 +41,10 @@ public class RetryPolicy {
         }
         public Builder backOffStrategy(BackOffStrategy backOffStrategy) {
             this.backOffStrategy = backOffStrategy;
+            return this;
+        }
+        public Builder retryListener(RetryListener retryListener) {
+            this.retryListener = retryListener;
             return this;
         }
         public RetryPolicy build() {
