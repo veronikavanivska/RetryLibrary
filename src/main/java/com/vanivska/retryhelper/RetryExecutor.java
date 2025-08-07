@@ -49,26 +49,42 @@ public class RetryExecutor {
         throw new IllegalStateException("Not work");
     }
 
+    /**
+     * Executes the given {@link Callable} task according to the rules defined in the provided
+     * {@link RetryPolicy}, retrying based on the result predicate.
+     * <p>
+     * The task will be attempted up to {@code retryPolicy.getMaxAttempts()} times.
+     * After each attempt, if the result satisfies the retry predicate, the result is returned immediately.
+     * Otherwise, the retry listener is notified, and the thread waits according to the backoff strategy before retrying.
+     * If all retries fail, the fallback supplier is used to provide a result.
+     *
+     * @param <T>          the result type of the task
+     * @param task         the task to be executed
+     * @param retryPolicy  the retry policy that controls max attempts, result predicate, backoff, and listener
+     * @param fallback     the fallback supplier that provides a result if retries are exhausted
+     * @return the result of the task if it satisfies the predicate, or the fallback result after exhausting retries
+     * @throws Exception
+     */
     public static <T> T retryOnResult(Callable<T> task, RetryPolicy<T> retryPolicy,Supplier<T> fallback) throws Exception {
-        for (int i = 1; i <= retryPolicy.getMaxAttempts(); i++) {
-            T result = task.call();
+            for (int i = 1; i <= retryPolicy.getMaxAttempts(); i++) {
+                T result = task.call();
 
-            if(retryPolicy.getResult().test(result)) {
-                return result;
-            }
-            if(i == retryPolicy.getMaxAttempts()) {
-                return fallback.get();
-            }
+                if(retryPolicy.getResult().test(result)) {
+                    return result;
+                }
+                if(i == retryPolicy.getMaxAttempts()) {
+                    return fallback.get();
+                }
 
-            retryPolicy.getRetryListener().onRetry(i,null);
-            try{
-                Thread.sleep(retryPolicy.getBackOffStrategy().nextAttemptTime(i).toMillis());
-            }catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                throw ie;
-            }
+                retryPolicy.getRetryListener().onRetry(i,null);
+                try{
+                    Thread.sleep(retryPolicy.getBackOffStrategy().nextAttemptTime(i).toMillis());
+                }catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw ie;
+                }
 
+            }
+            throw new IllegalStateException("Not work");
         }
-        throw new IllegalStateException("Not work");
-    }
 }
