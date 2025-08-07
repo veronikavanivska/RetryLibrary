@@ -1,6 +1,8 @@
 package com.vanivska.retryhelper;
 
 
+import com.vanivska.retryhelper.strategies.FixedBackOffStrategy;
+
 import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
@@ -25,7 +27,7 @@ public class RetryPolicy {
     public static class Builder {
         private int maxAttempts =3 ;
         private Predicate<Throwable> predicate = e -> true;
-        private BackOffStrategy backOffStrategy;
+        private BackOffStrategy backOffStrategy = new FixedBackOffStrategy(Duration.ofMillis(500));
 
         public Builder maxAttempts(int maxAttempts) {
             this.maxAttempts = maxAttempts;
