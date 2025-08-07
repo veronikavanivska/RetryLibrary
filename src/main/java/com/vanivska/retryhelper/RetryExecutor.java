@@ -1,6 +1,8 @@
 package com.vanivska.retryhelper;
 
+import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 /**
  * Utility class responsible for executing tasks with retry logic
@@ -27,20 +29,15 @@ public class RetryExecutor {
      * @throws Exception if the task throws an exception and retries are exhausted or predicate disallows retry
      * @throws InterruptedException if the thread is interrupted while waiting between retries
      */
-    public static <T> T retry(Callable<T> task, RetryPolicy retryPolicy) throws Exception {
+    public static <T> T retryOnException(Callable<T> task, RetryPolicy<T> retryPolicy) throws Exception {
         for (int i = 1; i <= retryPolicy.getMaxAttempts(); i++) {
             try{
-                return task.call();
+               return task.call();
             }catch (Exception e) {
-                if (i == retryPolicy.getMaxAttempts()) {
+                if (i == retryPolicy.getMaxAttempts() || !retryPolicy.getPredicate().test(e)) {
                     throw e;
                 }
-                if(!retryPolicy.getPredicate().test(e)) {
-                    throw e;
-                }
-
                 retryPolicy.getRetryListener().onRetry(i, e);
-
                 try{
                     Thread.sleep(retryPolicy.getBackOffStrategy().nextAttemptTime(i).toMillis());
                 }catch (InterruptedException ie) {
@@ -48,6 +45,29 @@ public class RetryExecutor {
                     throw ie;
                 }
             }
+        }
+        throw new IllegalStateException("Not work");
+    }
+
+    public static <T> T retryOnResult(Callable<T> task, RetryPolicy<T> retryPolicy,Supplier<T> fallback) throws Exception {
+        for (int i = 1; i <= retryPolicy.getMaxAttempts(); i++) {
+            T result = task.call();
+
+            if(retryPolicy.getResult().test(result)) {
+                return result;
+            }
+            if(i == retryPolicy.getMaxAttempts()) {
+                return fallback.get();
+            }
+
+            retryPolicy.getRetryListener().onRetry(i,null);
+            try{
+                Thread.sleep(retryPolicy.getBackOffStrategy().nextAttemptTime(i).toMillis());
+            }catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw ie;
+            }
+
         }
         throw new IllegalStateException("Not work");
     }

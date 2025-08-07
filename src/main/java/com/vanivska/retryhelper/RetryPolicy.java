@@ -5,22 +5,27 @@ import com.vanivska.retryhelper.strategies.FixedBackOffStrategy;
 
 import java.time.Duration;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Configuration for retry behavior.
  * Includes max attempts, retry condition, backoff strategy, and optional retry listener.
  */
-public class RetryPolicy {
+public class RetryPolicy<T> {
     private final int maxAttempts;
     private final Predicate<Throwable> predicate;
+    private final Predicate<T> result;
     private final BackOffStrategy backOffStrategy;
     private final RetryListener retryListener;
+
+
 
     RetryPolicy(Builder builder){
         this.maxAttempts = builder.maxAttempts;
         this.predicate = builder.predicate;
         this.backOffStrategy = builder.backOffStrategy;
         this.retryListener = builder.retryListener;
+        this.result = builder.result;
     }
 
     /**
@@ -32,6 +37,11 @@ public class RetryPolicy {
      * Returns the strategy to compute delays between retries.
      */
     public BackOffStrategy getBackOffStrategy() { return backOffStrategy; }
+
+    /**
+     * * Returns the predicate that determines if a result is retriable.
+     */
+    public Predicate<T> getResult() { return result; }
 
     /**
      * * Returns the predicate that determines if an exception is retriable.
@@ -48,7 +58,7 @@ public class RetryPolicy {
      * Builder for creating a {@link RetryPolicy} instanse.
      * Allows configuring retry parameters in a fluent manner.
      */
-    public static class Builder {
+    public static class Builder<T> {
         /**
          * Maximum number of retry attempts (default is 3).
          */
@@ -69,6 +79,8 @@ public class RetryPolicy {
          */
         private RetryListener retryListener = (attempt, exception) -> {};
 
+
+        private Predicate<T> result =r -> true;
         /**
          * Sets the maximum number of retry attempts.
          *
@@ -80,6 +92,10 @@ public class RetryPolicy {
             return this;
         }
 
+        public Builder<T> result(Predicate<T> result){
+            this.result = result;
+            return this;
+        }
         /**
          * Sets the predicate to decide if an exception is retriable.
          *
@@ -125,6 +141,7 @@ public class RetryPolicy {
             if(backOffStrategy == null) throw new IllegalArgumentException("backOffStrategy must be not null");
             if(predicate == null) throw new IllegalArgumentException("predicate must be not null");
             if(retryListener == null) throw new IllegalArgumentException("retryListener must be not null");
+            if(result == null) throw new IllegalArgumentException("result must be not null");
             return new RetryPolicy(this);
         }
     }
