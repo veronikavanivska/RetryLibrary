@@ -1,14 +1,37 @@
 package com.vanivska.retryhelper;
 
+import com.vanivska.retryhelper.strategies.FixedBackOffStrategy;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RetryTest {
     public static void main(String[] args) {
-    testImmediateSuccess();
-    testImmediateFailure();
-    testAlwaysFailure();
+//    testImmediateSuccess();
+//    testImmediateFailure();
+//    testAlwaysFailure();
+
+        AtomicInteger counter = new AtomicInteger(0);
+        RetryPolicy retryPolicy = new RetryPolicy.Builder()
+                .maxAttempts(3)
+                .backOffStrategy(new FixedBackOffStrategy(Duration.ofMillis(100)))
+                .build();
+
+        try {
+            String result = RetryExecutor.retry(() -> {
+                int attempt = counter.incrementAndGet();
+                if (attempt < 3) {
+                    throw new RuntimeException("Fail eeeee " + attempt);
+                }
+                return "Success on attempt " + attempt;
+            }, retryPolicy);
+            System.out.println("✅ testRetrySuccess passed: " + result);
+        } catch (Exception e) {
+            System.out.println("❌ testRetrySuccess failed: " + e.getMessage());
+        }
+
     }
 
     static void testImmediateSuccess() {

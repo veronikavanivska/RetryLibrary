@@ -14,7 +14,7 @@ public class RetryPolicy {
     private final BackOffStrategy backOffStrategy;
     private final RetryListener retryListener;
 
-    private RetryPolicy(Builder builder){
+    RetryPolicy(Builder builder){
         this.maxAttempts = builder.maxAttempts;
         this.predicate = builder.predicate;
         this.backOffStrategy = builder.backOffStrategy;
@@ -24,6 +24,7 @@ public class RetryPolicy {
     public BackOffStrategy getBackOffStrategy() { return backOffStrategy; }
     public Predicate<Throwable> getPredicate() { return predicate; }
     public RetryListener getRetryListener() { return retryListener; }
+
 
 
     public static class Builder {
@@ -49,6 +50,9 @@ public class RetryPolicy {
         }
         public RetryPolicy build() {
             if (maxAttempts <= 0) throw new IllegalArgumentException("maxAttempts must be > 0");
+            if(backOffStrategy == null) throw new IllegalArgumentException("backOffStrategy must be not null");
+            if(predicate == null) throw new IllegalArgumentException("predicate must be not null");
+            if(retryListener == null) throw new IllegalArgumentException("retryListener must be not null");
             return new RetryPolicy(this);
         }
     }
