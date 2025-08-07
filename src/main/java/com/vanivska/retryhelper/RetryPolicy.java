@@ -5,7 +5,7 @@ import com.vanivska.retryhelper.strategies.FixedBackOffStrategy;
 
 import java.time.Duration;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
+
 
 /**
  * Configuration for retry behavior.
@@ -20,7 +20,7 @@ public class RetryPolicy<T> {
 
 
 
-    RetryPolicy(Builder builder){
+    RetryPolicy(Builder<T> builder){
         this.maxAttempts = builder.maxAttempts;
         this.predicate = builder.predicate;
         this.backOffStrategy = builder.backOffStrategy;
@@ -87,7 +87,7 @@ public class RetryPolicy<T> {
          * @param maxAttempts the maximum retry attempts; must be greater than 0
          * @return this builder instance for chaining
          */
-        public Builder maxAttempts(int maxAttempts) {
+        public Builder<T> maxAttempts(int maxAttempts) {
             this.maxAttempts = maxAttempts;
             return this;
         }
@@ -102,7 +102,7 @@ public class RetryPolicy<T> {
          * @param predicate predicate that tests the exception; must not be null
          * @return this builder instance for chaining
          */
-        public Builder predicate(Predicate<Throwable> predicate) {
+        public Builder<T> predicate(Predicate<Throwable> predicate) {
             this.predicate = predicate;
             return this;
         }
@@ -113,7 +113,7 @@ public class RetryPolicy<T> {
          * @param backOffStrategy the backoff strategy; must not be null
          * @return this builder instance for chaining
          */
-        public Builder backOffStrategy(BackOffStrategy backOffStrategy) {
+        public Builder<T> backOffStrategy(BackOffStrategy backOffStrategy) {
             this.backOffStrategy = backOffStrategy;
             return this;
         }
@@ -124,7 +124,7 @@ public class RetryPolicy<T> {
          * @param retryListener the listener; must not be null
          * @return this builder instance for chaining
          */
-        public Builder retryListener(RetryListener retryListener) {
+        public Builder<T> retryListener(RetryListener retryListener) {
             this.retryListener = retryListener;
             return this;
         }
@@ -136,13 +136,13 @@ public class RetryPolicy<T> {
          * @return the constructed RetryPolicy
          * @throws IllegalArgumentException if any parameter is invalid or null
          */
-        public RetryPolicy build() {
+        public RetryPolicy<T> build() {
             if (maxAttempts <= 0) throw new IllegalArgumentException("maxAttempts must be > 0");
             if(backOffStrategy == null) throw new IllegalArgumentException("backOffStrategy must be not null");
             if(predicate == null) throw new IllegalArgumentException("predicate must be not null");
             if(retryListener == null) throw new IllegalArgumentException("retryListener must be not null");
             if(result == null) throw new IllegalArgumentException("result must be not null");
-            return new RetryPolicy(this);
+            return new RetryPolicy<>(this);
         }
     }
 }
